@@ -190,7 +190,7 @@ yat:
 # Gitment comments
  gitment:
    username: "aaron888hacker"
-   repo: "github-comments"
+   repo: "gitalk-comment"
    client_id: "Ov23lius85u2cTp7QQIb"
    client_secret: "b59df5bf3f46a3f11906679b70f1a90cbd97fd91"
    redirect_uri: "http://aaron888hacker.github.io/"   # If you use a custom domain name
