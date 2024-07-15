@@ -188,12 +188,12 @@ yat:
 #   shortname: "Your Disqus username"
 
 # Gitment comments
-# gitment:
-#   username: "Your GitHub username"
-#   repo: "The repo to store comments"
-#   client_id: "Your client ID"
-#   client_secret: "Your client secret"
-#   redirect_uri: "Your redirect url"   # If you use a custom domain name
+ gitment:
+   username: "aaron888hacker"
+   repo: "github-comments"
+   client_id: "Ov23lius85u2cTp7QQIb"
+   client_secret: "b59df5bf3f46a3f11906679b70f1a90cbd97fd91"
+   redirect_uri: "http://aaron888hacker.github.io/"   # If you use a custom domain name
 
 # Utterances comments
 # See https://utteranc.es/
