@@ -159,7 +159,7 @@ yat:
    home:
      heading: "Welcome To Aaron's Website!"
      subheading: "You Will Find Intresting Things Here"
-#     banner: "Your image url"
+     banner: "https://i.graphicmama.com/blog/wp-content/uploads/2019/11/01140927/banner-design-with-illustrations.png"
 
 # Banner default settings
 # These banner settings are for global banner default, but you can also
