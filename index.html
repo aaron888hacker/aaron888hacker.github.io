@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>高级在线聊天室</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --primary-color: #409eff;
+      --secondary-color: #67c23a;
+      --warning-color: #e6a23c;
+      --danger-color: #f56c6c;
+      --info-color: #909399;
+      --text-primary: #303133;
+      --text-regular: #606266;
+      --text-secondary: #909399;
+      --border-color: #dcdfe6;
+      --border-light: #e4e7ed;
+      --background-light: #f5f7fa;
+      --background-dark: #1a1a1a;
+      --chat-background-light: #ffffff;
+      --chat-background-dark: #2c2c2c;
+    }
+
+    [data-theme="dark"] {
+      --text-primary: #ffffff;
+      --text-regular: #c0c4cc;
+      --text-secondary: #909399;
+      --border-color: #434343;
+      --border-light: #303030;
+      --background-light: #1a1a1a;
+      --background-dark: #000000;
+      --chat-background-light: #2c2c2c;
+      --chat-background-dark: #1a1a1a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    body {
+      background: var(--background-light);
+      color: var(--text-primary);
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .chat-container {
+      display: flex;
+      height: calc(100vh - 40px);
+      background: var(--chat-background-light);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    /* 侧边栏样式 */
+    .sidebar {
+      width: 280px;
+      background: var(--chat-background-dark);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      margin-right: 12px;
+    }
+
+    .user-details h3 {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .user-details p {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .room-selector {
+      padding: 10px;
+    }
+
+    .room-selector h4 {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .room-list {
+      list-style: none;
+    }
+
+    .room-item {
+      padding: 10px 12px;
+      margin-bottom: 4px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .room-item:hover {
+      background: var(--border-light);
+    }
+
+    .room-item.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .room-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .user-count {
+      font-size: 11px;
+      background: rgba(0, 0, 0, 0.1);
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    .room-item.active .user-count {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .settings-section {
+      margin-top: auto;
+      padding: 20px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      background: var(--border-light);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .theme-text {
+      font-size: 13px;
+      color: var(--text-regular);
+    }
+
+    .theme-icon {
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+
+    /* 主聊天区域 */
+    .chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--chat-background-light);
+    }
+
+    .chat-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .chat-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--background-light);
+    }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      max-width: 70%;
+    }
+
+    .message.me {
+      align-self: flex-end;
+    }
+
+    .message.other {
+      align-self: flex-start;
+    }
+
+    .message-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+      gap: 8px;
+    }
+
+    .message-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, var(--info-color), var(--warning-color));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .message-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .message-author {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .message-time {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .message-content {
+      padding: 12px 16px;
+      border-radius: 18px;
+      line-height: 1.4;
+      font-size: 14px;
+      word-wrap: break-word;
+    }
+
+    .message.me .message-content {
+      background: var(--primary-color);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.other .message-content {
+      background: var(--chat-background-light);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-bottom-left-radius: 4px;
+    }
+
+    .system-message {
+      align-self: center;
+      background: var(--border-light);
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      margin: 8px 0;
+    }
+
+    /* 输入区域 */
+    .chat-input {
+      padding: 20px 24px;
+      background: var(--chat-background-light);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .input-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      background: var(--background-light);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 8px;
+      transition: border-color 0.2s;
+    }
+
+    .input-container:focus-within {
+      border-color: var(--primary-color);
+    }
+
+    .emoji-btn, .image-btn {
+      padding: 8px;
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background-color 0.2s;
+    }
+
+    .emoji-btn:hover, .image-btn:hover {
+      background: var(--border-light);
+    }
+
+    .input-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message-input {
+      border: none;
+      outline: none;
+      background: none;
+      color: var(--text-primary);
+      font-size: 14px;
+      padding: 8px 0;
+      resize: none;
+      min-height: 20px;
+      max-height: 120px;
+      line-height: 1.4;
+    }
+
+    .input-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+
+    .username-input {
+      border: none;
+      outline: none;
+      background: none;
+      color: var(--text-secondary);
+      font-size: 12px;
+      padding: 4px 0;
+      width: 100px;
+    }
+
+    .username-input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .send-btn {
+      padding: 8px 16px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .send-btn:hover {
+      background: #337eef;
+    }
+
+    .send-btn:disabled {
+      background: var(--text-secondary);
+      cursor: not-allowed;
+    }
+
+    /* 表情包面板 */
+    .emoji-panel {
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      background: var(--chat-background-light);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      max-width: 280px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      display: none;
+    }
+
+    .emoji-item {
+      padding: 8px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background-color 0.2s;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .emoji-item:hover {
+      background: var(--border-light);
+    }
+
+    .emoji-btn-container {
+      position: relative;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .chat-container {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 200px;
+      }
+      
+      .message {
+        max-width: 85%;
+      }
+      
+      .chat-messages {
+        padding: 16px;
+      }
+      
+      .chat-input {
+        padding: 16px;
+      }
+    }
+
+    /* 滚动条样式 */
+    .chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+      background: var(--border-light);
+      border-radius: 3px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: var(--text-secondary);
+      border-radius: 3px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+      background: var(--text-regular);
+    }
+
+    /* 动画效果 */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    /* 图片消息样式 */
+    .message-image {
+      max-width: 200px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .message-image:hover {
+      transform: scale(1.05);
+    }
+
+    /* 加载动画 */
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--text-secondary);
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="chat-container">
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="user-info">
+          <div class="avatar" id="userAvatar">U</div>
+          <div class="user-details">
+            <h3 id="userName">用户</h3>
+            <p>在线</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="room-selector">
+        <h4>聊天室</h4>
+        <ul class="room-list" id="roomList">
+          <li class="room-item active" data-room="general">
+            <span class="room-name">💬 综合讨论</span>
+            <span class="user-count">12</span>
+          </li>
+          <li class="room-item" data-room="tech">
+            <span class="room-name">💻 技术交流</span>
+            <span class="user-count">8</span>
+          </li>
+          <li class="room-item" data-room="random">
+            <span class="room-name">🎲 随机话题</span>
+            <span class="user-count">5</span>
+          </li>
+          <li class="room-item" data-room="games">
+            <span class="room-name">🎮 游戏讨论</span>
+            <span class="user-count">15</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="settings-section">
+        <div class="theme-toggle" id="themeToggle">
+          <span class="theme-text">深色模式</span>
+          <i class="theme-icon fas fa-moon"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主聊天区域 -->
+    <div class="chat-main">
+      <div class="chat-header">
+        <h2 class="chat-title" id="currentRoomTitle">💬 综合讨论</h2>
+        <p class="chat-subtitle" id="currentRoomSubtitle">欢迎来到综合讨论频道</p>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <!-- 系统消息 -->
+        <div class="system-message">
+          🎉 欢迎来到聊天室！请文明发言，友好交流。
+        </div>
+      </div>
+
+      <div class="chat-input">
+        <div class="input-container">
+          <div class="emoji-btn-container">
+            <button class="emoji-btn" id="emojiBtn">
+              <i class="fas fa-smile"></i>
+            </button>
+            <div class="emoji-panel" id="emojiPanel">
+              <div class="emoji-item">😊</div>
+              <div class="emoji-item">😂</div>
+              <div class="emoji-item">😍</div>
+              <div class="emoji-item">🤔</div>
+              <div class="emoji-item">😎</div>
+              <div class="emoji-item">😭</div>
+              <div class="emoji-item">😡</div>
+              <div class="emoji-item">👍</div>
+              <div class="emoji-item">❤️</div>
+              <div class="emoji-item">🎉</div>
+              <div class="emoji-item">🔥</div>
+              <div class="emoji-item">💯</div>
+              <div class="emoji-item">👏</div>
+              <div class="emoji-item">🙏</div>
+              <div class="emoji-item">😴</div>
+              <div class="emoji-item">🤩</div>
+            </div>
+          </div>
+          
+          <div class="input-wrapper">
+            <input type="text" class="username-input" id="usernameInput" placeholder="输入昵称..." maxlength="20" />
+            <textarea class="message-input" id="messageInput" placeholder="输入消息..." rows="1" maxlength="500"></textarea>
+          </div>
+          
+          <button class="image-btn" id="imageBtn">
+            <i class="fas fa-image"></i>
+          </button>
+          
+          <button class="send-btn" id="sendBtn">
+            发送
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 全局变量
+    let currentUser = {
+      name: '',
+      avatar: 'U',
+      id: generateUserId()
+    };
+
+    let currentRoom = 'general';
+    let chatData = {
+      general: [],
+      tech: [],
+      random: [],
+      games: []
+    };
+
+    let isDarkMode = false;
+    let isEmojiPanelVisible = false;
+
+    // DOM 元素
+    const chatMessages = document.getElementById('chatMessages');
+    const messageInput = document.getElementById('messageInput');
+    const usernameInput = document.getElementById('usernameInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const emojiBtn = document.getElementById('emojiBtn');
+    const emojiPanel = document.getElementById('emojiPanel');
+    const imageBtn = document.getElementById('imageBtn');
+    const themeToggle = document.getElementById('themeToggle');
+    const roomList = document.getElementById('roomList');
+    const currentRoomTitle = document.getElementById('currentRoomTitle');
+    const currentRoomSubtitle = document.getElementById('currentRoomSubtitle');
+    const userAvatar = document.getElementById('userAvatar');
+    const userName = document.getElementById('userName');
+
+    // 房间配置
+    const roomConfig = {
+      general: {
+        title: '💬 综合讨论',
+        subtitle: '欢迎来到综合讨论频道',
+        description: '讨论任何话题，分享生活点滴'
+      },
+      tech: {
+        title: '💻 技术交流',
+        subtitle: '技术爱好者的聚集地',
+        description: '分享技术心得，解决技术问题'
+      },
+      random: {
+        title: '🎲 随机话题',
+        subtitle: '各种有趣的随机话题',
+        description: '从天文地理到鸡毛蒜皮，畅所欲言'
+      },
+      games: {
+        title: '🎮 游戏讨论',
+        subtitle: '游戏玩家的天堂',
+        description: '讨论游戏攻略，分享游戏心得'
+      }
+    };
+
+    // 初始化
+    function init() {
+      loadUserData();
+      loadChatData();
+      loadTheme();
+      setupEventListeners();
+      renderMessages();
+      autoResizeTextarea();
+    }
+
+    // 生成用户ID
+    function generateUserId() {
+      return 'user_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    // 加载用户数据
+    function loadUserData() {
+      const savedUser = localStorage.getItem('chatUser');
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        usernameInput.value = currentUser.name;
+        userAvatar.textContent = currentUser.avatar;
+        userName.textContent = currentUser.name || '用户';
+      }
+    }
+
+    // 保存用户数据
+    function saveUserData() {
+      localStorage.setItem('chatUser', JSON.stringify(currentUser));
+    }
+
+    // 加载聊天数据
+    function loadChatData() {
+      const savedData = localStorage.getItem('chatData');
+      if (savedData) {
+        chatData = JSON.parse(savedData);
+      }
+    }
+
+    // 保存聊天数据
+    function saveChatData() {
+      localStorage.setItem('chatData', JSON.stringify(chatData));
+    }
+
+    // 加载主题
+    function loadTheme() {
+      const savedTheme = localStorage.getItem('chatTheme');
+      if (savedTheme === 'dark') {
+        enableDarkMode();
+      }
+    }
+
+    // 启用深色模式
+    function enableDarkMode() {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeToggle.querySelector('.theme-text').textContent = '浅色模式';
+      themeToggle.querySelector('.theme-icon').className = 'theme-icon fas fa-sun';
+      isDarkMode = true;
+      localStorage.setItem('chatTheme', 'dark');
+    }
+
+    // 禁用深色模式
+    function disableDarkMode() {
+      document.documentElement.removeAttribute('data-theme');
+      themeToggle.querySelector('.theme-text').textContent = '深色模式';
+      themeToggle.querySelector('.theme-icon').className = 'theme-icon fas fa-moon';
+      isDarkMode = false;
+      localStorage.setItem('chatTheme', 'light');
+    }
+
+    // 设置事件监听器
+    function setupEventListeners() {
+      // 发送消息
+      sendBtn.addEventListener('click', sendMessage);
+      messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      // 表情按钮
+      emojiBtn.addEventListener('click', toggleEmojiPanel);
+      
+      // 表情选择
+      document.querySelectorAll('.emoji-item').forEach(item => {
+        item.addEventListener('click', function() {
+          insertEmoji(this.textContent);
+        });
+      });
+
+      // 图片上传
+      imageBtn.addEventListener('click', triggerImageUpload);
+
+      // 主题切换
+      themeToggle.addEventListener('click', toggleTheme);
+
+      // 房间切换
+      roomList.addEventListener('click', function(e) {
+        const roomItem = e.target.closest('.room-item');
+        if (roomItem) {
+          switchRoom(roomItem.dataset.room);
+        }
+      });
+
+      // 用户名输入
+      usernameInput.addEventListener('input', updateUserName);
+
+      // 点击外部关闭表情面板
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.emoji-btn-container')) {
+          hideEmojiPanel();
+        }
+      });
+
+      // 自动调整输入框高度
+      messageInput.addEventListener('input', autoResizeTextarea);
+    }
+
+    // 自动调整输入框高度
+    function autoResizeTextarea() {
+      messageInput.style.height = 'auto';
+      messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+    }
+
+    // 切换表情面板
+    function toggleEmojiPanel() {
+      isEmojiPanelVisible = !isEmojiPanelVisible;
+      emojiPanel.style.display = isEmojiPanelVisible ? 'grid' : 'none';
+    }
+
+    // 隐藏表情面板
+    function hideEmojiPanel() {
+      isEmojiPanelVisible = false;
+      emojiPanel.style.display = 'none';
+    }
+
+    // 插入表情
+    function insertEmoji(emoji) {
+      const cursorPos = messageInput.selectionStart;
+      const textBefore = messageInput.value.substring(0, cursorPos);
+      const textAfter = messageInput.value.substring(cursorPos);
+      
+      messageInput.value = textBefore + emoji + textAfter;
+      messageInput.focus();
+      messageInput.setSelectionRange(cursorPos + emoji.length, cursorPos + emoji.length);
+      
+      hideEmojiPanel();
+    }
+
+    // 触发图片上传
+    function triggerImageUpload() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.style.display = 'none';
+      
+      input.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          handleImageUpload(file);
+        }
+      });
+      
+      document.body.appendChild(input);
+      input.click();
+      document.body.removeChild(input);
+    }
+
+    // 处理图片上传
+    function handleImageUpload(file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showNotification('图片大小不能超过5MB', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        sendImageMessage(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 发送图片消息
+    function sendImageMessage(imageDataUrl) {
+      const message = {
+        id: generateMessageId(),
+        type: 'image',
+        content: imageDataUrl,
+        author: currentUser.name || '匿名用户',
+        authorId: currentUser.id,
+        authorAvatar: currentUser.avatar,
+        timestamp: new Date().toISOString(),
+        room: currentRoom
+      };
+
+      chatData[currentRoom].push(message);
+      saveChatData();
+      renderMessages();
+      scrollToBottom();
+      
+      // 模拟其他用户的回复
+      setTimeout(() => {
+        simulateOtherUserMessage();
+      }, 2000 + Math.random() * 3000);
+    }
+
+    // 发送消息
+    function sendMessage() {
+      const content = messageInput.value.trim();
+      const username = usernameInput.value.trim();
+
+      if (!content) {
+        showNotification('请输入消息内容', 'warning');
+        return;
+      }
+
+      if (!username) {
+        showNotification('请输入昵称', 'warning');
+        usernameInput.focus();
+        return;
+      }
+
+      // 更新用户信息
+      if (username !== currentUser.name) {
+        currentUser.name = username;
+        currentUser.avatar = username.charAt(0).toUpperCase();
+        saveUserData();
+        updateUserDisplay();
+      }
+
+      const message = {
+        id: generateMessageId(),
+        type: 'text',
+        content: content,
+        author: username,
+        authorId: currentUser.id,
+        authorAvatar: currentUser.avatar,
+        timestamp: new Date().toISOString(),
+        room: currentRoom
+      };
+
+      chatData[currentRoom].push(message);
+      saveChatData();
+      
+      messageInput.value = '';
+      autoResizeTextarea();
+      
+      renderMessages();
+      scrollToBottom();
+
+      // 模拟其他用户的回复
+      setTimeout(() => {
+        simulateOtherUserMessage();
+      }, 1000 + Math.random() * 4000);
+    }
+
+    // 生成消息ID
+    function generateMessageId() {
+      return 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    // 更新用户显示
+    function updateUserDisplay() {
+      userAvatar.textContent = currentUser.avatar;
+      userName.textContent = currentUser.name || '用户';
+    }
+
+    // 更新用户名
+    function updateUserName() {
+      const username = usernameInput.value.trim();
+      if (username && username !== currentUser.name) {
+        currentUser.name = username;
+        currentUser.avatar = username.charAt(0).toUpperCase();
+        saveUserData();
+        updateUserDisplay();
+      }
+    }
+
+    // 切换房间
+    function switchRoom(roomId) {
+      if (roomId === currentRoom) return;
+
+      currentRoom = roomId;
+      
+      // 更新房间选择器状态
+      document.querySelectorAll('.room-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      document.querySelector(`[data-room="${roomId}"]`).classList.add('active');
+
+      // 更新房间标题和副标题
+      currentRoomTitle.textContent = roomConfig[roomId].title;
+      currentRoomSubtitle.textContent = roomConfig[roomId].subtitle;
+
+      // 渲染消息
+      renderMessages();
+      scrollToBottom();
+
+      // 添加系统消息
+      setTimeout(() => {
+        addSystemMessage(`🔄 切换到 ${roomConfig[roomId].title} 频道`);
+      }, 100);
+    }
+
+    // 切换主题
+    function toggleTheme() {
+      if (isDarkMode) {
+        disableDarkMode();
+      } else {
+        enableDarkMode();
+      }
+    }
+
+    // 渲染消息
+    function renderMessages() {
+      chatMessages.innerHTML = '';
+
+      // 添加欢迎消息
+      const welcomeMessage = document.createElement('div');
+      welcomeMessage.className = 'system-message';
+      welcomeMessage.textContent = `🎉 欢迎来到${roomConfig[currentRoom].title}！${roomConfig[currentRoom].description}`;
+      chatMessages.appendChild(welcomeMessage);
+
+      // 渲染聊天记录
+      chatData[currentRoom].forEach(message => {
+        const messageElement = createMessageElement(message);
+        chatMessages.appendChild(messageElement);
+      });
+    }
+
+    // 创建消息元素
+    function createMessageElement(message) {
+      const messageDiv = document.createElement('div');
+      const isCurrentUser = message.authorId === currentUser.id;
+      
+      messageDiv.className = `message ${isCurrentUser ? 'me' : 'other'}`;
+
+      const messageHeader = document.createElement('div');
+      messageHeader.className = 'message-header';
+
+      const avatar = document.createElement('div');
+      avatar.className = 'message-avatar';
+      avatar.textContent = message.authorAvatar || message.author.charAt(0).toUpperCase();
+
+      const info = document.createElement('div');
+      info.className = 'message-info';
+
+      const author = document.createElement('span');
+      author.className = 'message-author';
+      author.textContent = message.author;
+
+      const time = document.createElement('span');
+      time.className = 'message-time';
+      time.textContent = formatTime(message.timestamp);
+
+      info.appendChild(author);
+      info.appendChild(time);
+
+      messageHeader.appendChild(avatar);
+      messageHeader.appendChild(info);
+
+      const content = document.createElement('div');
+      content.className = 'message-content';
+
+      if (message.type === 'text') {
+        content.textContent = message.content;
+      } else if (message.type === 'image') {
+        const img = document.createElement('img');
+        img.src = message.content;
+        img.className = 'message-image';
+        img.alt = 'Shared image';
+        img.onclick = function() {
+          openImageInNewTab(message.content);
+        };
+        content.appendChild(img);
+      }
+
+      messageDiv.appendChild(messageHeader);
+      messageDiv.appendChild(content);
+
+      return messageDiv;
+    }
+
+    // 添加系统消息
+    function addSystemMessage(content) {
+      const systemMessage = document.createElement('div');
+      systemMessage.className = 'system-message';
+      systemMessage.textContent = content;
+      chatMessages.appendChild(systemMessage);
+      scrollToBottom();
+    }
+
+    // 格式化时间
+    function formatTime(timestamp) {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diff = now - date;
+
+      if (diff < 60000) {
+        return '刚刚';
+      } else if (diff < 3600000) {
+        return Math.floor(diff / 60000) + '分钟前';
+      } else if (diff < 86400000) {
+        return Math.floor(diff / 3600000) + '小时前';
+      } else {
+        return date.toLocaleDateString('zh-CN');
+      }
+    }
+
+    // 滚动到底部
+    function scrollToBottom() {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // 显示通知
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.className = `notification notification-${type}`;
+      notification.textContent = message;
+      
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        background: ${type === 'error' ? '#f56c6c' : type === 'warning' ? '#e6a23c' : '#409eff'};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+      `;
+
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 3000);
+    }
+
+    // 在新标签页打开图片
+    function openImageInNewTab(imageUrl) {
+      window.open(imageUrl, '_blank');
+    }
+
+    // 模拟其他用户消息
+    function simulateOtherUserMessage() {
+      const botNames = ['小明', '小红', '小李', '小张', '小王', '大壮', '美美', '明明', '红红', '丽丽'];
+      const botAvatars = ['明', '红', '李', '张', '王', '壮', '美', '明', '红', '丽'];
+      const botMessages = [
+        '说得对！',
+        '有道理',
+        '👍',
+        '学习了',
+        '哈哈哈',
+        '同感',
+        '确实如此',
+        '支持！',
+        '不错不错',
+        '继续加油'
+      ];
+
+      const randomName = botNames[Math.floor(Math.random() * botNames.length)];
+      const randomAvatar = botAvatars[Math.floor(Math.random() * botAvatars.length)];
+      const randomMessage = botMessages[Math.floor(Math.random() * botMessages.length)];
+
+      const message = {
+        id: generateMessageId(),
+        type: 'text',
+        content: randomMessage,
+        author: randomName,
+        authorId: 'bot_' + Math.random().toString(36).substr(2, 9),
+        authorAvatar: randomAvatar,
+        timestamp: new Date().toISOString(),
+        room: currentRoom
+      };
+
+      chatData[currentRoom].push(message);
+      saveChatData();
+      renderMessages();
+      scrollToBottom();
+    }
+
+    // 添加动画样式
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideOut {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // 初始化应用
+    init();
+
+    // 定期清理旧消息（保持性能）
+    setInterval(() => {
+      Object.keys(chatData).forEach(room => {
+        if (chatData[room].length > 100) {
+          chatData[room] = chatData[room].slice(-100);
+          saveChatData();
+        }
+      });
+    }, 60000); // 每分钟检查一次
+
+    // 页面加载完成后滚动到底部
+    window.addEventListener('load', scrollToBottom);
+  </script>
+</body>
+</html>
