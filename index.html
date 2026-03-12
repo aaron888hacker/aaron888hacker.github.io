@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>多人在线聊天室</title>
+  <title>多人在线聊天室（永久保存记录）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -16,44 +16,147 @@
     :root {
       --bg: #f6f7f9;
       --chatBg: #fff;
-      --me: #5392f9;
-      --other: #eaecef;
+      --sidebarBg: #f0f2f5;
+      --primary: #5392f9;
+      --secondary: #eaecef;
       --text: #222;
       --textLight: #666;
       --border: #ddd;
+      --roomActive: #e1e9ff;
     }
 
     [dark] {
       --bg: #18181b;
       --chatBg: #222;
-      --other: #333;
+      --sidebarBg: #2a2a2e;
+      --secondary: #333;
       --text: #eee;
       --textLight: #999;
       --border: #444;
+      --roomActive: #3a4664;
     }
 
     body {
       background: var(--bg);
       color: var(--text);
-      max-width: 700px;
-      margin: 0 auto;
-      padding: 10px;
       height: 100vh;
       display: flex;
-      flex-direction: column;
+      max-width: 1000px;
+      margin: 0 auto;
+      overflow: hidden;
     }
 
-    .chat-box {
-      flex: 1;
-      background: var(--chatBg);
-      border-radius: 14px;
+    .sidebar {
+      width: 260px;
+      background: var(--sidebarBg);
+      border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      padding: 10px;
     }
 
-    .header {
+    .sidebar-header {
+      padding: 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+
+    .sidebar-header h2 {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .online-count {
+      font-size: 12px;
+      color: var(--textLight);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .rooms {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .room {
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+
+    .room:hover {
+      background: var(--secondary);
+    }
+
+    .room.active {
+      background: var(--roomActive);
+      font-weight: 500;
+    }
+
+    .room-icon {
+      font-size: 14px;
+      width: 20px;
+      text-align: center;
+    }
+
+    .sidebar-footer {
+      padding: 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .dark-btn {
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 16px;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dark-btn:hover {
+      background: var(--secondary);
+    }
+
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--chatBg);
+    }
+
+    .chat-header {
       padding: 14px 16px;
       border-bottom: 1px solid var(--border);
       display: flex;
@@ -61,15 +164,18 @@
       align-items: center;
     }
 
-    .header h2 {
+    .chat-title {
       font-size: 16px;
+      font-weight: 500;
     }
 
-    #darkBtn {
-      background: none;
+    .clear-btn {
+      padding: 4px 10px;
+      background: var(--secondary);
       border: none;
+      border-radius: 12px;
       color: var(--text);
-      font-size: 16px;
+      font-size: 12px;
       cursor: pointer;
     }
 
@@ -79,45 +185,128 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     .msg {
       max-width: 75%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .msg.me {
+      align-self: flex-end;
+    }
+
+    .msg.other {
+      align-self: flex-start;
+    }
+
+    .msg-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--textLight);
+    }
+
+    .msg-name {
+      font-weight: 500;
+    }
+
+    .msg-time {
+      font-size: 10px;
+    }
+
+    .msg-content {
       padding: 8px 12px;
       border-radius: 16px;
       font-size: 14px;
       line-height: 1.4;
     }
 
-    .msg.me {
-      background: var(--me);
+    .msg.me .msg-content {
+      background: var(--primary);
       color: white;
-      align-self: flex-end;
       border-bottom-right-radius: 4px;
     }
 
-    .msg.other {
-      background: var(--other);
+    .msg.other .msg-content {
+      background: var(--secondary);
       color: var(--text);
-      align-self: flex-start;
       border-bottom-left-radius: 4px;
     }
 
-    .name {
-      font-size: 11px;
+    .msg-image {
+      max-width: 200px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .input-area {
+      padding: 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-tools {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .tool-btn {
+      background: none;
+      border: none;
       color: var(--textLight);
-      margin-bottom: 3px;
+      font-size: 18px;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tool-btn:hover {
+      background: var(--secondary);
+    }
+
+    .emoji-panel {
+      display: none;
+      background: var(--sidebarBg);
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+    }
+
+    .emoji-panel.show {
+      display: grid;
+    }
+
+    .emoji {
+      font-size: 18px;
+      text-align: center;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+    }
+
+    .emoji:hover {
+      background: var(--secondary);
     }
 
     .input-bar {
       display: flex;
-      padding: 10px;
       gap: 8px;
-      border-top: 1px solid var(--border);
     }
 
-    #name {
+    #name-input {
       width: 90px;
       padding: 10px;
       border: 1px solid var(--border);
@@ -127,7 +316,7 @@
       outline: none;
     }
 
-    #input {
+    #msg-input {
       flex: 1;
       padding: 10px 14px;
       border: 1px solid var(--border);
@@ -135,132 +324,385 @@
       background: var(--bg);
       color: var(--text);
       outline: none;
+      resize: none;
+      height: 40px;
+      max-height: 120px;
     }
 
-    #send {
+    #send-btn {
       padding: 0 16px;
       border: none;
-      background: var(--me);
+      background: var(--primary);
       color: white;
       border-radius: 20px;
       cursor: pointer;
     }
 
-    #send:active {
-      opacity: 0.8;
+    #send-btn:disabled {
+      background: var(--textLight);
+      cursor: not-allowed;
     }
 
-    .tip {
-      text-align: center;
-      font-size: 12px;
-      color: #888;
-      margin: 6px 0;
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: 120px;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .rooms {
+        display: flex;
+        overflow-x: auto;
+        gap: 4px;
+      }
+      .room {
+        min-width: 120px;
+      }
+      .msg {
+        max-width: 85%;
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--textLight);
+      border-radius: 3px;
     }
   </style>
 </head>
 
 <body>
-<div class="chat-box">
-  <div class="header">
-    <h2>多人在线聊天室</h2>
-    <button id="darkBtn"><i class="fa-solid fa-moon"></i></button>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>聊天室</h2>
+      <div class="online-count">
+        <i class="fa-solid fa-circle" style="color: #4CAF50; font-size: 8px;"></i>
+        <span id="online-count">0</span> 人在线
+      </div>
+    </div>
+
+    <div class="rooms">
+      <div class="room active" data-room="general">
+        <span class="room-icon">💬</span>
+        <span>综合讨论</span>
+      </div>
+      <div class="room" data-room="tech">
+        <span class="room-icon">💻</span>
+        <span>技术交流</span>
+      </div>
+      <div class="room" data-room="game">
+        <span class="room-icon">🎮</span>
+        <span>游戏专区</span>
+      </div>
+      <div class="room" data-room="life">
+        <span class="room-icon">🍣</span>
+        <span>生活日常</span>
+      </div>
+      <div class="room" data-room="study">
+        <span class="room-icon">📚</span>
+        <span>学习打卡</span>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar" id="user-avatar">U</div>
+        <span id="user-name">匿名</span>
+      </div>
+      <button class="dark-btn" id="dark-btn">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+    </div>
   </div>
 
-  <div class="messages" id="msgs"></div>
+  <div class="chat-container">
+    <div class="chat-header">
+      <h3 class="chat-title" id="chat-title">💬 综合讨论</h3>
+      <button class="clear-btn" id="clear-local-btn">清空本地记录</button>
+    </div>
 
-  <div class="input-bar">
-    <input type="text" id="name" placeholder="昵称" maxlength="10">
-    <input type="text" id="input" placeholder="输入消息..." maxlength="200">
-    <button id="send">发送</button>
+    <div class="messages" id="messages"></div>
+
+    <div class="input-area">
+      <div class="input-tools">
+        <button class="tool-btn" id="emoji-btn">
+          <i class="fa-solid fa-face-smile"></i>
+        </button>
+        <label class="tool-btn" for="image-input">
+          <i class="fa-solid fa-image"></i>
+        </label>
+        <input type="file" id="image-input" accept="image/*" style="display: none;">
+      </div>
+
+      <div class="emoji-panel" id="emoji-panel">
+        <div class="emoji">😊</div><div class="emoji">😂</div><div class="emoji">😍</div><div class="emoji">🤔</div>
+        <div class="emoji">😎</div><div class="emoji">😭</div><div class="emoji">😡</div><div class="emoji">👍</div>
+        <div class="emoji">❤️</div><div class="emoji">🎉</div><div class="emoji">🔥</div><div class="emoji">💯</div>
+        <div class="emoji">👏</div><div class="emoji">🙏</div><div class="emoji">😴</div><div class="emoji">🤩</div>
+      </div>
+
+      <div class="input-bar">
+        <input type="text" id="name-input" placeholder="昵称" maxlength="10">
+        <textarea id="msg-input" placeholder="输入消息..." maxlength="500"></textarea>
+        <button id="send-btn" disabled>发送</button>
+      </div>
+    </div>
   </div>
-</div>
 
-<div class="tip">打开多个页面即可测试多人聊天</div>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD7zH8vM13VYfH9V1kE6t1xQ8vHjMkE0z8",
+      authDomain: "public-chat-demo-123.firebaseapp.com",
+      databaseURL: "https://public-chat-demo-123-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "public-chat-demo-123",
+      storageBucket: "public-chat-demo-123.appspot.com",
+      messagingSenderId: "1058205608022",
+      appId: "1:1058205608022:web:1f8d1334a7b3c8f2e7d17a"
+    };
 
-<script>
-// 🔥 免费公开 Firebase 配置（仅用于演示）
-const firebaseConfig = {
-  apiKey: "AIzaSyD7zH8vM13VYfH9V1kE6t1xQ8vHjMkE0z8",
-  authDomain: "public-chat-demo-123.firebaseapp.com",
-  databaseURL: "https://public-chat-demo-123-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "public-chat-demo-123",
-  storageBucket: "public-chat-demo-123.appspot.com",
-  messagingSenderId: "1058205608022",
-  appId: "1:1058205608022:web:1f8d1334a7b3c8f2e7d17a"
-};
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-// 初始化
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const chatRef = db.ref("global_chat");
+    let currentRoom = "general";
+    let userId = localStorage.getItem("chat_user_id") || generateId();
+    let userName = localStorage.getItem("chat_user_name") || "匿名";
+    let userAvatar = userName.charAt(0).toUpperCase();
+    localStorage.setItem("chat_user_id", userId);
 
-const msgs = document.getElementById("msgs");
-const nameInput = document.getElementById("name");
-const input = document.getElementById("input");
-const send = document.getElementById("send");
-const darkBtn = document.getElementById("darkBtn");
+    const elements = {
+      messages: document.getElementById("messages"),
+      msgInput: document.getElementById("msg-input"),
+      nameInput: document.getElementById("name-input"),
+      sendBtn: document.getElementById("send-btn"),
+      emojiBtn: document.getElementById("emoji-btn"),
+      emojiPanel: document.getElementById("emoji-panel"),
+      imageInput: document.getElementById("image-input"),
+      darkBtn: document.getElementById("dark-btn"),
+      onlineCount: document.getElementById("online-count"),
+      userAvatar: document.getElementById("user-avatar"),
+      userName: document.getElementById("user-name"),
+      chatTitle: document.getElementById("chat-title"),
+      rooms: document.querySelectorAll(".room"),
+      clearLocalBtn: document.getElementById("clear-local-btn")
+    };
 
-// 读取本地昵称
-const localName = localStorage.getItem("username");
-if (localName) nameInput.value = localName;
+    // ========== 永久保存聊天记录 ==========
+    function saveMsgToLocal(room, msg) {
+      const key = "chat_history_" + room;
+      let list = JSON.parse(localStorage.getItem(key) || "[]");
+      list.push(msg);
+      if (list.length > 200) list = list.slice(-200);
+      localStorage.setItem(key, JSON.stringify(list));
+    }
 
-// 发送
-function sendMsg() {
-  const name = (nameInput.value || "匿名").trim();
-  const text = input.value.trim();
-  if (!text) return;
+    function loadLocalHistory(room) {
+      const key = "chat_history_" + room;
+      return JSON.parse(localStorage.getItem(key) || "[]");
+    }
 
-  localStorage.setItem("username", name);
+    function clearLocalHistory(room) {
+      localStorage.removeItem("chat_history_" + room);
+      elements.messages.innerHTML = "";
+    }
 
-  chatRef.push({
-    name,
-    text,
-    time: Date.now(),
-    uid: Math.random().toString(36).slice(2)
-  });
+    // ========== 初始化 ==========
+    function init() {
+      elements.nameInput.value = userName;
+      elements.userAvatar.textContent = userAvatar;
+      elements.userName.textContent = userName;
 
-  input.value = "";
-}
+      elements.msgInput.addEventListener("input", updateSendBtn);
+      elements.msgInput.addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
 
-send.onclick = sendMsg;
-input.addEventListener("keydown", e => {
-  if (e.key === "Enter") sendMsg();
-});
+      elements.nameInput.addEventListener("change", updateUserName);
+      elements.sendBtn.onclick = sendMessage;
+      elements.emojiBtn.onclick = () => elements.emojiPanel.classList.toggle("show");
+      elements.imageInput.onchange = sendImage;
+      elements.darkBtn.onclick = toggleDarkMode;
+      elements.clearLocalBtn.onclick = () => clearLocalHistory(currentRoom);
 
-// 监听新消息
-chatRef.orderByChild("time").limitToLast(100).on("child_added", snap => {
-  const data = snap.val();
-  const isMe = data.uid === localStorage.getItem("myid");
-  const div = document.createElement("div");
-  div.className = "msg " + (isMe ? "me" : "other");
+      document.querySelectorAll(".emoji").forEach(e => {
+        e.onclick = () => {
+          elements.msgInput.value += e.textContent;
+          elements.msgInput.focus();
+          updateSendBtn();
+        };
+      });
 
-  const name = document.createElement("div");
-  name.className = "name";
-  name.textContent = isMe ? "我" : data.name;
+      elements.rooms.forEach(r => {
+        r.onclick = () => switchRoom(r.dataset.room);
+      });
 
-  const content = document.createElement("div");
-  content.textContent = data.text;
+      if (localStorage.getItem("chat_dark_mode") === "true") {
+        document.documentElement.setAttribute("dark", "");
+        elements.darkBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+      }
 
-  div.appendChild(name);
-  div.appendChild(content);
-  msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
-});
+      setUserOnline(true);
+      listenOnlineUsers();
+      listenMessages();
+      elements.msgInput.addEventListener("input", autoResizeInput);
+    }
 
-// 深色模式
-darkBtn.onclick = () => {
-  document.documentElement.toggleAttribute("dark");
-  const isDark = document.documentElement.hasAttribute("dark");
-  darkBtn.innerHTML = isDark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
-};
+    function generateId() {
+      return "user_" + Math.random().toString(36).slice(2,10);
+    }
 
-// 标记自己
-if (!localStorage.getItem("myid")) {
-  localStorage.setItem("myid", Math.random().toString(36).slice(2));
-}
-</script>
+    function updateSendBtn() {
+      elements.sendBtn.disabled = !elements.msgInput.value.trim();
+    }
+
+    function autoResizeInput() {
+      elements.msgInput.style.height = "auto";
+      elements.msgInput.style.height = Math.min(elements.msgInput.scrollHeight, 120) + "px";
+    }
+
+    function updateUserName() {
+      userName = elements.nameInput.value.trim() || "匿名";
+      userAvatar = userName.charAt(0).toUpperCase();
+      localStorage.setItem("chat_user_name", userName);
+      elements.userAvatar.textContent = userAvatar;
+      elements.userName.textContent = userName;
+    }
+
+    function toggleDarkMode() {
+      const d = document.documentElement.hasAttribute("dark");
+      if (d) {
+        document.documentElement.removeAttribute("dark");
+        elements.darkBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        localStorage.setItem("chat_dark_mode", "false");
+      } else {
+        document.documentElement.setAttribute("dark", "");
+        elements.darkBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        localStorage.setItem("chat_dark_mode", "true");
+      }
+    }
+
+    function switchRoom(roomId) {
+      currentRoom = roomId;
+      elements.rooms.forEach(r => r.classList.toggle("active", r.dataset.room === roomId));
+      const titles = {
+        general:"💬 综合讨论", tech:"💻 技术交流", game:"🎮 游戏专区",
+        life:"🍣 生活日常", study:"📚 学习打卡"
+      };
+      elements.chatTitle.textContent = titles[roomId];
+      elements.messages.innerHTML = "";
+      listenMessages();
+    }
+
+    function setUserOnline(o) {
+      const ref = db.ref(`online_users/${userId}`);
+      if (o) {
+        ref.set({name:userName,avatar:userAvatar,online:true,last:Date.now()});
+        setTimeout(()=>ref.update({online:false}), 60000);
+      } else ref.update({online:false,last:Date.now()});
+    }
+
+    function listenOnlineUsers() {
+      db.ref("online_users").on("value", s => {
+        const u = s.val()||{};
+        let c = 0; Object.values(u).forEach(x=>x.online&&c++);
+        elements.onlineCount.textContent = c;
+      });
+    }
+
+    // ========== 监听消息（云端+本地） ==========
+    function listenMessages() {
+      db.ref(`chat_rooms/${currentRoom}`).off();
+      // 先加载本地
+      loadLocalHistory(currentRoom).forEach(m => addMessageToUI(m));
+      // 再监听云端
+      db.ref(`chat_rooms/${currentRoom}`)
+        .orderByChild("timestamp").limitToLast(200)
+        .on("child_added", s => {
+          const msg = s.val();
+          addMessageToUI(msg);
+          saveMsgToLocal(currentRoom, msg); // 同时保存本地
+        });
+    }
+
+    // ========== 发送 ==========
+    function sendMessage() {
+      const t = elements.msgInput.value.trim();
+      if (!t) return;
+      const msg = {
+        userId, name:userName, avatar:userAvatar,
+        text:t, type:"text", timestamp:Date.now()
+      };
+      db.ref(`chat_rooms/${currentRoom}`).push(msg);
+      elements.msgInput.value = "";
+      elements.msgInput.style.height = "40px";
+      updateSendBtn();
+      setUserOnline(true);
+    }
+
+    function sendImage(e) {
+      const f = e.target.files[0];
+      if (!f) return;
+      if (f.size>5*1024*1024) return alert("≤5MB");
+      const r = new FileReader();
+      r.onload = ()=>{
+        const msg = {
+          userId, name:userName, avatar:userAvatar,
+          image:r.result, type:"image", timestamp:Date.now()
+        };
+        db.ref(`chat_rooms/${currentRoom}`).push(msg);
+        setUserOnline(true);
+      };
+      r.readAsDataURL(f);
+      e.target.value = "";
+    }
+
+    // ========== 渲染消息 ==========
+    function addMessageToUI(msg) {
+      const isMe = msg.userId === userId;
+      const d = document.createElement("div");
+      d.className = `msg ${isMe?"me":"other"}`;
+
+      const h = document.createElement("div");
+      h.className = "msg-header";
+      const n = document.createElement("span");
+      n.className = "msg-name";
+      n.textContent = isMe ? "我" : msg.name;
+      const t = document.createElement("span");
+      t.className = "msg-time";
+      t.textContent = new Date(msg.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      h.append(n,t);
+
+      const c = document.createElement("div");
+      c.className = "msg-content";
+      if (msg.type === "text") c.textContent = msg.text;
+      if (msg.type === "image") {
+        const img = document.createElement("img");
+        img.src = msg.image;
+        img.className = "msg-image";
+        img.onclick = ()=>window.open(msg.image);
+        c.append(img);
+      }
+      d.append(h,c);
+      elements.messages.append(d);
+      elements.messages.scrollTop = elements.messages.scrollHeight;
+    }
+
+    window.onbeforeunload = ()=>setUserOnline(false);
+    init();
+  </script>
 </body>
 </html>
